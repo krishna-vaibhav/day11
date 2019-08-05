@@ -1,0 +1,170 @@
+Revise 
+Steps in spring MVC implementation & concept
+url --- http://host:port/spring_mvc/test/hello
+
+
+
+ModelAndView
+Model map
+Annotations --
+@Controller,@RequestMapping(special types @GetMapping,@PostMapping....),@AutoWired,@RequestParam,
+@
+------------------------------
+
+Validate Customer 
+Flow -- index.jsp -- login form  --Controller --HM based validation ---err --login form with err mesg , success (add cust details in HS) --redirect to  --details page --show details from session scope logout link --logout page.
+Solve this (part of vendor management w/o DB)
+Layers --Controller -- Service (B.L) --POJO (un-annotated POJO)
+
+User login -- success --chk role -- "vendor" --show his own details ---
+Add a Link 
+logout link --discard session --visit again(initially with a link & then redirect with delay)
+
+eg : <a href="<spring:url value='/vendor/logout'/>">Log Out</a>
+If cookies are enabled , when clnt clicks on the link
+URL ---http://host:port/day12/vendor/logout
+
+If cookies are disbaled , when clnt clicks on the link
+URL ---http://host:port/spring_mvc/vendor/logout;jsessionid=fhsfsgfh
+How to redirect client to next page after some delay ?
+API of HttpServletResponse
+void setHeader(String name,String value)
+eg : response.setHeader("refresh","10;url="+request.getContextPath());
+
+
+------------------------------------
+Important 
+
+Tecniques for transferring clnt's conv state --to -- server side
+
+1. If there multiple request params(use case -- register/update) --- bind POJO directly to a form
+How ?
+1.1 For  loading the form (in showForm method of the controller)  , bind empty POJO (using def constr) in model map 
+How  ? 
+Explicit --add Model as dependency & u add
+map.addAttribute(nm,val)
+OR better way 
+implicit -- add POJO as a dependency
+eg : User registration
+@GetMapping("/reg")
+public String showForm(User u) {...}
+
+What will SC do ?
+SC --- User u=new User();
+chks --- Are there any req params coming from client ? --- typically --no --- getter --
+adds pojo as model attr (in Model map)
+map.addAttribute("User",new User());
+
+1.2 In form (view ---jsp)  -use spring form tags along with modelAttribute
+Steps
+1. import spring supplied form tag lib
+2. Specify the name of modelAttribute under which form data will be exposed.(name of model attr mentioned in the controller)
+<form:form method="post" modelAttribute="user">
+  <form:input path="email"/>
+</form:form>
+
+
+
+1.3 Upon form submission (clnt pull I)
+clnt sends a new req --- containing req params
+@PostMapping("/reg")
+public String processForm(User u,RedirectAttributes flashMap,HttpSession hs) {
+//SC calls
+User u=new User();
+SC invokes MATCHING (req param names --POJO prop setters)
+setters. -- conv state is xferred to Controller.
+adds pojo as model attr (in Model map)
+map.addAttribute(nm,val)
+Thus you get a populated POJO directly in controller w/o calling <jsp:setProperty> & w/o using any java bean.
+
+
+2. What is  RedirectAttributes
+o.s.w.s.mvc.support.RedirectAttributes
+--map of flash scoped attributes
+Use case --- redirect scenario
+To remember the attrs till the next request only
+API of RedirectAttributes
+public RedirectAttributes addFlashAttribute(String nm,Object val)
+
+How  to get this flash map (=holder of redirect attrs/flash scoped attrs)?
+As a dependency from SC (add it as method argument in req handling method of the controller)
+
+2. 2nd technique -- @RequestParam
+
+3. 3rd technique -- @PathVariable
+Refer to day12 sequence.
+
+
+Project Tip
+
+How to avoid writing multiple of such forward to view type methods?(global mapping)
+
+@GetMapping("/{viewName}")
+public String forwardToView(@PathVariable viewName)
+{
+  return "/cust/"+viewName;
+}
+
+Here , request url pattern MUST MATCH with view page name.
+
+-----------------------------------
+Flow of Spring MVC with Hibernate
+(Share "spring_mvc_hibernate" template)
+Project Tip -- Create n keep spring_hibernate with Java SE template project ready. Test everything from service--DAO--POJO --DB in Java SE(easier to manage!) .
+Tester ---Service --DAO--POJO --DB
+Then integrate with web app.
+---------------
+2 way form binding
+In UserController
+@GetMapping("/register")
+1. public String showRegForm(Model map)
+{
+  map.addAttribute("user",new User());
+  return "/user/register";
+}
+OR
+public String showRegForm(Model map)
+{
+  map.addAttribute(new User());
+  return "/user/register";
+}
+OR
+public String showRegForm(User u)
+{
+   sop(u);//Empty POJO
+  return "/user/register";
+}
+
+2. From register.jsp
+2.1 import spring supplied form tag library.
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="f" %>
+<body>
+<f:form modelAttribute="user" method="post">
+  <f:input path="email"/>
+ <input type="submit" value="Register User"/>
+</f:form>
+
+modelAttribute --name of the model attr(=derived POJO cls name) under which form data is bound.
+def action = form will be submitted to same URL (eg : /user/register)
+path=email ---@ time of loading form , SC will auto invoke User POJO's getEmail
+
+3. User fills up reg /updation form & submits 
+URL ---http://host:port/ctx/user/register --method=post
+
+In UserController ,
+@PostMapping("/register")
+public String processForm(User u,.......)
+{
+// SC invokes 
+User u=new User();
+SC chks for MATCHING POJO prop setter with req param names
+--if yes --all matching setter will be called(setEmail,setPass.....)
+map.addAttribute("user" u);
+ sop(u); //POPULATED POJO
+}
+---------------------------------
+Solve 
+vendor update requirement
+
+
+

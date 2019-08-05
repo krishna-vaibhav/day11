@@ -1,0 +1,53 @@
+Spring hibernate integration --in web application
+1. Create dyn web project
+2. Add user lib 
+3. web.xml --D.S entry
+4. <WEB-INF> \spring-servlet.xml
+ctx,mvc,p --V.R
+5. Layers involved
+@Controller --- @Service + @Transactional ---DAO @Repository -- POJO (@Entity / @Embeddable) --DB
+
+6. Config steps.
+<resources> -- new src folder
+copy <day10_help\spring-hibernate\spring4-hib5-templates>
+ 1. database.properties 
+2. hibernate-persistence.xml
+3. log4j.properties  ---into <resources> & edit as per your db settings
+(refer to your own WORKING hibernate.cfg.xml for this)
+7. import hibernate-persistence.xml in to main config file(spring-servlet.xml)
+--------------------------------------
+Dev steps
+
+1. POJO -- Vendor
+Add annotations.
+2. DAO -- 
+i/f
+imple class --@Repository
+Dependency (auto wired) --SF
+
+3. Service 
+i/f --VendorService 
+imple class  --- HMBasedService + DAOBased Service
+ DAOBased Service --- @Service + @Transactional
+Dependent -- service
+Dependency ---dao layer 
+D.I --via @AutoWired
+
+4. Controller --@Controller
+No i/f required here.
+Dependent --Controller
+Dependency --service i/f
+
+5. Add view layer (JSPs) & test entire web application.
+
+
+
+
+
+
+
+
+
+
+
+
